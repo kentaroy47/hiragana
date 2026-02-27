@@ -8,7 +8,11 @@
       "Bash(powershell -Command \"Get-Command flutter -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
       "Bash(powershell -Command \"ls ''C:\\\\Users\\\\kyosh'' | Select-Object Name\")",
       "Bash(\"C:/Users/kyosh/flutter/bin/flutter\" build web --no-tree-shake-icons)",
-      "Bash(\"C:/Users/kyosh/flutter/bin/flutter\" devices)"
+      "Bash(\"C:/Users/kyosh/flutter/bin/flutter\" devices)",
+      "Bash(git init)",
+      "Bash(git checkout -b main)",
+      "Bash(git remote set-url origin git@github.com:kentaroy47/hiragana-flutter.git)",
+      "Bash(git add lib/screens/practice_screen.dart .github/workflows/deploy.yml)"
     ]
   }
 }
