@@ -26,6 +26,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
   late int _rowIndex;
   late int _charIndex;
   bool _showCompletion = false;
+  int _score = 0;
   final GlobalKey<DrawingCanvasState> _canvasKey = GlobalKey();
 
   @override
@@ -106,12 +107,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     key: _canvasKey,
                     character: _currentChar.char,
                     totalStrokes: _currentChar.strokeCount,
-                    onComplete: () => setState(() => _showCompletion = true),
+                    onComplete: (score) => setState(() {
+                      _score = score;
+                      _showCompletion = true;
+                    }),
                   ),
                 ),
                 if (_showCompletion)
                   _CompletionOverlay(
                     character: _currentChar.char,
+                    score: _score,
                     onNext: _hasNext
                         ? () {
                             setState(() => _showCompletion = false);
@@ -136,11 +141,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
 class _CompletionOverlay extends StatefulWidget {
   final String character;
+  final int score;
   final VoidCallback? onNext;
   final VoidCallback onRetry;
 
   const _CompletionOverlay({
     required this.character,
+    required this.score,
     this.onNext,
     required this.onRetry,
   });
@@ -197,10 +204,21 @@ class _CompletionOverlayState extends State<_CompletionOverlay>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Confetti emoji row
-                    const Text(
-                      '🎉  ⭐  🎊',
-                      style: TextStyle(fontSize: 40),
+                    // Star rating row
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(3, (i) {
+                        final filled = i < widget.score;
+                        return Icon(
+                          filled
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: filled
+                              ? const Color(0xFFF5C518)
+                              : const Color(0xFFCCCCCC),
+                          size: 48,
+                        );
+                      }),
                     ),
                     const SizedBox(height: 16),
 
@@ -222,10 +240,14 @@ class _CompletionOverlayState extends State<_CompletionOverlay>
                     ),
                     const SizedBox(height: 8),
 
-                    // Subtitle
+                    // Subtitle — score dependent
                     Text(
-                      'じょうずにかけたね！',
-                      style: TextStyle(
+                      switch (widget.score) {
+                        3 => 'じょうずにかけたね！',
+                        2 => 'よくかけたね！',
+                        _ => 'もういちどかいてみよう！',
+                      },
+                      style: const TextStyle(
                         fontSize: 18,
                         color: AppTheme.textGray,
                       ),
