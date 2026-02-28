@@ -4,6 +4,7 @@ import '../data/hiragana_data.dart';
 import '../data/katakana_data.dart';
 import 'practice_screen.dart';
 import 'map_screen.dart';
+import 'pokemon_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -136,6 +137,23 @@ class _RightPanel extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 12),
+
+          // ポケモン button
+          _MenuButton(
+            emoji: '🎯',
+            label: 'ポケモン',
+            isActive: true,
+            isPokemon: true,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PokemonScreen(),
+                ),
+              );
+            },
+          ),
           const SizedBox(height: 24),
 
           // Level card
@@ -181,23 +199,31 @@ class _MenuButton extends StatelessWidget {
   final String emoji;
   final String label;
   final bool isActive;
+  final bool isPokemon;
   final VoidCallback? onTap;
 
   const _MenuButton({
     required this.emoji,
     required this.label,
     required this.isActive,
+    this.isPokemon = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color bg = !isActive
+        ? const Color(0xFFEEEAE0)
+        : isPokemon
+            ? AppTheme.levelGold
+            : AppTheme.blueAccent;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.blueAccent : const Color(0xFFEEEAE0),
+          color: bg,
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
@@ -212,6 +238,10 @@ class _MenuButton extends StatelessWidget {
                 color: isActive ? Colors.white : AppTheme.textGray,
               ),
             ),
+            if (isPokemon) ...[
+              const Spacer(),
+              const Text('🎮', style: TextStyle(fontSize: 18)),
+            ],
           ],
         ),
       ),

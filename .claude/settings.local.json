@@ -12,7 +12,12 @@
       "Bash(git init)",
       "Bash(git checkout -b main)",
       "Bash(git remote set-url origin git@github.com:kentaroy47/hiragana-flutter.git)",
-      "Bash(git add lib/screens/practice_screen.dart .github/workflows/deploy.yml)"
+      "Bash(git add lib/screens/practice_screen.dart .github/workflows/deploy.yml)",
+      "Bash(git commit:*)",
+      "Bash(git push origin main)",
+      "Bash(git remote set-url origin https://github.com/kentaroy47/hiragana-flutter.git)",
+      "Bash(ipconfig)",
+      "Bash(flutter analyze)"
     ]
   }
 }
