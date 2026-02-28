@@ -17,9 +17,11 @@ class _PokemonScreenState extends State<PokemonScreen> {
   int _charIndex = 0;
   final List<int> _scores = [];
   bool _showCatchOverlay = false;
-  int _caughtCount = 0;
+  final List<PokemonEntry> _caughtPokemon = [];
   bool _advancing = false;
   int _sessionId = 0; // ValueKey 用：変わると DrawingCanvas が新規作成される
+  bool _showHint = false;
+  int _streak = 0;
 
   final _random = math.Random();
   int _prevPokemonIndex = -1;
@@ -55,6 +57,15 @@ class _PokemonScreenState extends State<PokemonScreen> {
       _scores.clear();
       _showCatchOverlay = false;
       _advancing = false;
+      _streak = 0; // リトライでストリークリセット
+    });
+  }
+
+  void _activateHint() {
+    if (_showHint) return;
+    setState(() => _showHint = true);
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _showHint = false);
     });
   }
 
@@ -81,9 +92,10 @@ class _PokemonScreenState extends State<PokemonScreen> {
         if (!mounted) return;
         SoundService.playCatch();
         setState(() {
-          _caughtCount++;
+          _caughtPokemon.add(_pokemon);
           _showCatchOverlay = true;
           _advancing = false;
+          _streak++;
         });
       });
     }
@@ -104,7 +116,8 @@ class _PokemonScreenState extends State<PokemonScreen> {
             width: 280,
             child: _LeftPanel(
               pokemon: _pokemon,
-              caughtCount: _caughtCount,
+              caughtPokemon: _caughtPokemon,
+              streak: _streak,
               onBack: () => Navigator.pop(context),
             ),
           ),
@@ -124,14 +137,24 @@ class _PokemonScreenState extends State<PokemonScreen> {
                         pokemonColor: _pokemon.color,
                       ),
                       const SizedBox(height: 6),
-                      // ふりがな
-                      Text(
-                        _pokemon.hiragana,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: AppTheme.textGray,
-                          letterSpacing: 6,
-                        ),
+                      // ふりがな ＋ ヒントボタン
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _pokemon.hiragana,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: AppTheme.textGray,
+                              letterSpacing: 6,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          _HintButton(
+                            onPressed: _activateHint,
+                            active: _showHint,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       // お絵かきキャンバス
@@ -141,6 +164,7 @@ class _PokemonScreenState extends State<PokemonScreen> {
                           character: currentChar,
                           totalStrokes: strokeCount,
                           onComplete: _onCharComplete,
+                          showHint: _showHint,
                         ),
                       ),
                     ],
@@ -151,8 +175,14 @@ class _PokemonScreenState extends State<PokemonScreen> {
                   _CatchOverlay(
                     pokemon: _pokemon,
                     scores: List.unmodifiable(_scores),
+                    streak: _streak,
                     onNext: _pickNewPokemon,
                     onRetry: _retrySamePokemon,
+                  ),
+                // キラキラエフェクト（ゲット時）
+                if (_showCatchOverlay)
+                  Positioned.fill(
+                    child: _ConfettiOverlay(baseColor: _pokemon.color),
                   ),
               ],
             ),
@@ -167,12 +197,14 @@ class _PokemonScreenState extends State<PokemonScreen> {
 
 class _LeftPanel extends StatelessWidget {
   final PokemonEntry pokemon;
-  final int caughtCount;
+  final List<PokemonEntry> caughtPokemon;
+  final int streak;
   final VoidCallback onBack;
 
   const _LeftPanel({
     required this.pokemon,
-    required this.caughtCount,
+    required this.caughtPokemon,
+    required this.streak,
     required this.onBack,
   });
 
@@ -226,24 +258,55 @@ class _LeftPanel extends StatelessWidget {
 
           const Spacer(),
 
-          // ゲット数
+          // ゲット数 ＋ ずかんボタン
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: AppTheme.background,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('🎯', style: TextStyle(fontSize: 22)),
-                const SizedBox(width: 10),
+                const Text('🎯', style: TextStyle(fontSize: 20)),
+                const SizedBox(width: 8),
                 Text(
-                  'ゲット：$caughtCount',
+                  'ゲット：${caughtPokemon.length}',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.darkText,
+                  ),
+                ),
+                const Spacer(),
+                // ずかんボタン
+                Tooltip(
+                  message: 'ゲットずかん',
+                  child: InkWell(
+                    onTap: caughtPokemon.isEmpty
+                        ? null
+                        : () => showDialog(
+                              context: context,
+                              builder: (_) => _PokedexDialog(
+                                caughtPokemon: List.unmodifiable(caughtPokemon),
+                              ),
+                            ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: caughtPokemon.isEmpty
+                            ? const Color(0xFFEEEEEE)
+                            : AppTheme.blueAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.menu_book_rounded,
+                        size: 22,
+                        color: caughtPokemon.isEmpty
+                            ? AppTheme.textGray
+                            : AppTheme.blueAccent,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -648,6 +711,187 @@ class _CatchOverlayState extends State<_CatchOverlay>
           ),
         );
       },
+    );
+  }
+}
+
+// ─── ゲットずかん ダイアログ ──────────────────────────────────────────────────
+
+class _PokedexDialog extends StatelessWidget {
+  final List<PokemonEntry> caughtPokemon;
+
+  const _PokedexDialog({required this.caughtPokemon});
+
+  @override
+  Widget build(BuildContext context) {
+    // 重複排除してゲット回数をカウント
+    final counts = <String, int>{};
+    final unique = <PokemonEntry>[];
+    for (final p in caughtPokemon) {
+      if (!counts.containsKey(p.katakana)) unique.add(p);
+      counts[p.katakana] = (counts[p.katakana] ?? 0) + 1;
+    }
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SizedBox(
+        width: 680,
+        height: 460,
+        child: Column(
+          children: [
+            // ヘッダー
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 18, 12, 12),
+              child: Row(
+                children: [
+                  const Text('📖', style: TextStyle(fontSize: 22)),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'ゲットずかん',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.darkText,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${unique.length}ひき',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: AppTheme.textGray,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+
+            // グリッド or 空状態
+            Expanded(
+              child: unique.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('🔍', style: TextStyle(fontSize: 48)),
+                          SizedBox(height: 12),
+                          Text(
+                            'まだゲットしていないよ！',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: AppTheme.textGray,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.82,
+                      ),
+                      itemCount: unique.length,
+                      itemBuilder: (context, i) {
+                        final p = unique[i];
+                        return _PokedexCard(
+                          pokemon: p,
+                          count: counts[p.katakana]!,
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── ずかん1枚カード ──────────────────────────────────────────────────────────
+
+class _PokedexCard extends StatelessWidget {
+  final PokemonEntry pokemon;
+  final int count;
+
+  const _PokedexCard({required this.pokemon, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: pokemon.color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: pokemon.color.withValues(alpha: 0.35),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _PokemonImage(pokemon: pokemon, size: 72),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  pokemon.katakana,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: pokemon.color,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                pokemon.hiragana,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppTheme.textGray,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        // 複数回ゲットしたときのバッジ
+        if (count > 1)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.pinkAccent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '×$count',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

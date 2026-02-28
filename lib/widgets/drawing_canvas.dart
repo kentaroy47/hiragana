@@ -6,12 +6,14 @@ class DrawingCanvas extends StatefulWidget {
   final String character;
   final int totalStrokes;
   final void Function(int score)? onComplete;
+  final bool showHint;
 
   const DrawingCanvas({
     super.key,
     required this.character,
     required this.totalStrokes,
     this.onComplete,
+    this.showHint = false,
   });
 
   @override
@@ -112,6 +114,7 @@ class DrawingCanvasState extends State<DrawingCanvas> {
                     currentStroke: _current,
                     currentStrokeIndex: _strokes.length,
                     completed: _completed,
+                    showHint: widget.showHint,
                   ),
                   child: Container(),
                 ),
@@ -221,6 +224,7 @@ class _CanvasPainter extends CustomPainter {
   final List<Offset> currentStroke;
   final int currentStrokeIndex;
   final bool completed;
+  final bool showHint;
 
   _CanvasPainter({
     required this.character,
@@ -228,6 +232,7 @@ class _CanvasPainter extends CustomPainter {
     required this.currentStroke,
     required this.currentStrokeIndex,
     required this.completed,
+    this.showHint = false,
   });
 
   @override
@@ -277,7 +282,8 @@ class _CanvasPainter extends CustomPainter {
         text: character,
         style: TextStyle(
           fontSize: size.height * 0.72,
-          color: AppTheme.refChar,
+          // ヒント中は通常より濃い色で表示
+          color: showHint ? const Color(0xFF777777) : AppTheme.refChar,
           fontFamily: 'serif',
           height: 1.0,
         ),
