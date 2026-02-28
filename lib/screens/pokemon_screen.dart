@@ -312,6 +312,33 @@ class _LeftPanel extends StatelessWidget {
               ],
             ),
           ),
+          // れんぞくゲット表示
+          if (streak >= 2) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6D00).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🔥', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$streakれんぞく！',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFFF6D00),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
         ],
       ),
@@ -520,12 +547,14 @@ class _CharProgressRow extends StatelessWidget {
 class _CatchOverlay extends StatefulWidget {
   final PokemonEntry pokemon;
   final List<int> scores;
+  final int streak;
   final VoidCallback onNext;
   final VoidCallback onRetry;
 
   const _CatchOverlay({
     required this.pokemon,
     required this.scores,
+    required this.streak,
     required this.onNext,
     required this.onRetry,
   });
@@ -664,6 +693,27 @@ class _CatchOverlayState extends State<_CatchOverlay>
                         letterSpacing: 5,
                       ),
                     ),
+
+                    // れんぞくゲットバッジ
+                    if (widget.streak >= 2) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6D00),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Text(
+                          '🔥 ${widget.streak}れんぞくゲット！',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 30),
 
                     // ボタン行
@@ -894,4 +944,186 @@ class _PokedexCard extends StatelessWidget {
       ],
     );
   }
+}
+
+// ─── なぞりヒントボタン ────────────────────────────────────────────────────────
+
+class _HintButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final bool active;
+
+  const _HintButton({required this.onPressed, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: active
+            ? const Color(0xFFFFE082).withValues(alpha: 0.5)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: active ? const Color(0xFFFFA000) : const Color(0xFFCCCCCC),
+          width: 1.5,
+        ),
+      ),
+      child: InkWell(
+        onTap: active ? null : onPressed,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('👋', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: 4),
+              Text(
+                'ヒント',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: active
+                      ? const Color(0xFFFFA000)
+                      : AppTheme.textGray,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── コンフェッティ（キラキラエフェクト） ──────────────────────────────────────
+
+class _Particle {
+  final double startX;
+  final double speed;
+  final double wobble;
+  final double rotation;
+  final double size;
+  final Color color;
+  final bool isRect;
+
+  const _Particle({
+    required this.startX,
+    required this.speed,
+    required this.wobble,
+    required this.rotation,
+    required this.size,
+    required this.color,
+    required this.isRect,
+  });
+}
+
+class _ConfettiOverlay extends StatefulWidget {
+  final Color baseColor;
+
+  const _ConfettiOverlay({required this.baseColor});
+
+  @override
+  State<_ConfettiOverlay> createState() => _ConfettiOverlayState();
+}
+
+class _ConfettiOverlayState extends State<_ConfettiOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late List<_Particle> _particles;
+  final _random = math.Random();
+
+  static const _palette = [
+    Color(0xFFFFD700),
+    Color(0xFFFF69B4),
+    Color(0xFF00CED1),
+    Color(0xFF98FB98),
+    Color(0xFFFF6347),
+    Color(0xFFDDA0DD),
+    Color(0xFFFFFFFF),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 2800),
+      vsync: this,
+    )..forward();
+
+    final colors = [..._palette, widget.baseColor];
+    _particles = List.generate(60, (_) {
+      return _Particle(
+        startX: _random.nextDouble(),
+        speed: 0.6 + _random.nextDouble() * 0.6,
+        wobble: (_random.nextDouble() - 0.5) * 2,
+        rotation: _random.nextDouble() * math.pi * 2,
+        size: 6 + _random.nextDouble() * 10,
+        color: colors[_random.nextInt(colors.length)],
+        isRect: _random.nextBool(),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return IgnorePointer(
+          child: CustomPaint(
+            painter: _ConfettiPainter(
+              particles: _particles,
+              progress: _ctrl.value,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ConfettiPainter extends CustomPainter {
+  final List<_Particle> particles;
+  final double progress;
+
+  const _ConfettiPainter({required this.particles, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    for (final p in particles) {
+      final alpha =
+          progress < 0.75 ? 1.0 : 1.0 - ((progress - 0.75) / 0.25);
+      paint.color = p.color.withValues(alpha: alpha.clamp(0.0, 1.0));
+
+      final y = size.height * progress * p.speed - p.size;
+      final x = size.width * p.startX +
+          math.sin(progress * math.pi * 4 + p.wobble * math.pi) * 30;
+
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(p.rotation + progress * math.pi * 4 * p.speed);
+
+      if (p.isRect) {
+        canvas.drawRect(
+          Rect.fromCenter(
+              center: Offset.zero, width: p.size, height: p.size * 0.5),
+          paint,
+        );
+      } else {
+        canvas.drawCircle(Offset.zero, p.size * 0.5, paint);
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ConfettiPainter old) => old.progress != progress;
 }
