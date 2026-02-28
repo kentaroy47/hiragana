@@ -28,8 +28,12 @@ jobs:
       - name: Build web
         run: flutter build web --base-href /hiragana-flutter/ --release
 
+      - name: Disable Jekyll
+        run: touch ./build/web/.nojekyll
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build/web
+          enable_jekyll: false
