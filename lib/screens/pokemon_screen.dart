@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../data/pokemon_data.dart';
 import '../services/sound_service.dart';
+import '../services/storage_service.dart';
 import '../widgets/drawing_canvas.dart';
 
 class PokemonScreen extends StatefulWidget {
@@ -29,6 +30,14 @@ class _PokemonScreenState extends State<PokemonScreen> {
   @override
   void initState() {
     super.initState();
+    // localStorage からゲット済みポケモンを復元
+    final lookup = {for (final p in pokemonList) p.katakana: p};
+    final saved = StorageService.loadCaughtNames();
+    for (final name in saved) {
+      final entry = lookup[name];
+      if (entry != null) _caughtPokemon.add(entry);
+    }
+
     final idx = _random.nextInt(pokemonList.length);
     _prevPokemonIndex = idx;
     _pokemon = pokemonList[idx];
@@ -97,6 +106,9 @@ class _PokemonScreenState extends State<PokemonScreen> {
           _advancing = false;
           _streak++;
         });
+        // localStorage に保存
+        StorageService.saveCaughtNames(
+            _caughtPokemon.map((p) => p.katakana).toList());
       });
     }
   }
