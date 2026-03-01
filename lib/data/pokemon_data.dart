@@ -14,6 +14,7 @@ class PokemonEntry {
   });
 
   List<String> get chars => katakana.split('');
+  List<String> get hiraganaChars => hiragana.split('');
 
   /// PokeAPI 公式アートワーク URL
   String get imageUrl =>
@@ -61,6 +62,47 @@ const Map<String, int> _strokeCounts = {
 };
 
 int strokeCountFor(String char) => _strokeCounts[char] ?? 2;
+
+/// ひらがな1文字あたりのストローク数
+const Map<String, int> _hiraganaStrokeCounts = {
+  // あ行
+  'あ': 3, 'い': 2, 'う': 2, 'え': 2, 'お': 3,
+  // か行（清音）
+  'か': 3, 'き': 3, 'く': 1, 'け': 3, 'こ': 2,
+  // か行（濁音）
+  'が': 5, 'ぎ': 5, 'ぐ': 3, 'げ': 5, 'ご': 4,
+  // さ行（清音）
+  'さ': 3, 'し': 1, 'す': 2, 'せ': 3, 'そ': 2,
+  // さ行（濁音）
+  'ざ': 5, 'じ': 3, 'ず': 4, 'ぜ': 5, 'ぞ': 4,
+  // た行（清音）
+  'た': 4, 'ち': 2, 'つ': 1, 'て': 1, 'と': 2,
+  // た行（濁音）
+  'だ': 6, 'ぢ': 4, 'づ': 3, 'で': 3, 'ど': 4,
+  // な行
+  'な': 4, 'に': 3, 'ぬ': 2, 'ね': 2, 'の': 1,
+  // は行（清音）
+  'は': 3, 'ひ': 2, 'ふ': 4, 'へ': 1, 'ほ': 4,
+  // は行（濁音）
+  'ば': 5, 'び': 4, 'ぶ': 6, 'べ': 3, 'ぼ': 6,
+  // は行（半濁音）
+  'ぱ': 4, 'ぴ': 3, 'ぷ': 5, 'ぺ': 2, 'ぽ': 5,
+  // ま行
+  'ま': 3, 'み': 2, 'む': 3, 'め': 2, 'も': 3,
+  // や行
+  'や': 3, 'ゆ': 2, 'よ': 3,
+  // ら行
+  'ら': 2, 'り': 2, 'る': 2, 'れ': 2, 'ろ': 1,
+  // わ行
+  'わ': 2, 'を': 3, 'ん': 1,
+  // 小文字
+  'ぁ': 3, 'ぃ': 2, 'ぅ': 2, 'ぇ': 2, 'ぉ': 3,
+  'ゃ': 3, 'ゅ': 2, 'ょ': 3, 'っ': 1,
+  // 長音符
+  'ー': 1,
+};
+
+int hiraganaStrokeCountFor(String char) => _hiraganaStrokeCounts[char] ?? 2;
 
 const List<PokemonEntry> pokemonList = [
   // ── 第1世代（75匹） ──────────────────────────────────────────────────────
@@ -372,4 +414,38 @@ const List<PokemonEntry> pokemonList = [
   PokemonEntry(katakana: 'ウェーニバル', hiragana: 'うぇーにばる', color: Color(0xFF0277BD), pokedexId: 914),
   PokemonEntry(katakana: 'コライドン', hiragana: 'こらいどん', color: Color(0xFFB71C1C), pokedexId: 1007),
   PokemonEntry(katakana: 'ミライドン', hiragana: 'みらいどん', color: Color(0xFF4527A0), pokedexId: 1008),
+  // ── メガシンカ・ゲンシカイキ ──────────────────────────────────────────────────
+  // 第1世代メガ
+  PokemonEntry(katakana: 'メガフシギバナ',       hiragana: 'めがふしぎばな',       color: Color(0xFF2E7D32), pokedexId: 10033),
+  PokemonEntry(katakana: 'メガリザードンエックス', hiragana: 'めがりざーどんえっくす', color: Color(0xFF1565C0), pokedexId: 10034),
+  PokemonEntry(katakana: 'メガリザードンワイ',   hiragana: 'めがりざーどんわい',   color: Color(0xFFFF7043), pokedexId: 10035),
+  PokemonEntry(katakana: 'メガカメックス',       hiragana: 'めがかめっくす',       color: Color(0xFF0D47A1), pokedexId: 10036),
+  PokemonEntry(katakana: 'メガゲンガー',         hiragana: 'めがげんがー',         color: Color(0xFF4A148C), pokedexId: 10041),
+  PokemonEntry(katakana: 'メガガルーラ',         hiragana: 'めががるーら',         color: Color(0xFF6D4C41), pokedexId: 10042),
+  PokemonEntry(katakana: 'メガギャラドス',       hiragana: 'めがぎゃらどす',       color: Color(0xFFC62828), pokedexId: 10044),
+  PokemonEntry(katakana: 'メガプテラ',           hiragana: 'めがぷてら',           color: Color(0xFF78909C), pokedexId: 10045),
+  PokemonEntry(katakana: 'メガミュウツーエックス', hiragana: 'めがみゅうつーえっくす', color: Color(0xFF1A237E), pokedexId: 10046),
+  PokemonEntry(katakana: 'メガミュウツーワイ',   hiragana: 'めがみゅうつーわい',   color: Color(0xFFAD1457), pokedexId: 10047),
+  // 第2世代メガ
+  PokemonEntry(katakana: 'メガデンリュウ',       hiragana: 'めがでんりゅう',       color: Color(0xFFFFD600), pokedexId: 10048),
+  PokemonEntry(katakana: 'メガハッサム',         hiragana: 'めがはっさむ',         color: Color(0xFF880E4F), pokedexId: 10050),
+  PokemonEntry(katakana: 'メガヘラクロス',       hiragana: 'めがへらくろす',       color: Color(0xFF1565C0), pokedexId: 10051),
+  PokemonEntry(katakana: 'メガバンギラス',       hiragana: 'めがばんぎらす',       color: Color(0xFF1B5E20), pokedexId: 10053),
+  // 第3世代メガ・ゲンシ
+  PokemonEntry(katakana: 'メガバシャーモ',       hiragana: 'めがばしゃーも',       color: Color(0xFFBF360C), pokedexId: 10054),
+  PokemonEntry(katakana: 'メガサーナイト',       hiragana: 'めがさーないと',       color: Color(0xFF26C6DA), pokedexId: 10055),
+  PokemonEntry(katakana: 'メガクチート',         hiragana: 'めがくちーと',         color: Color(0xFF546E7A), pokedexId: 10056),
+  PokemonEntry(katakana: 'メガチルタリス',       hiragana: 'めがちるたりす',       color: Color(0xFF80DEEA), pokedexId: 10062),
+  PokemonEntry(katakana: 'メガジュペッタ',       hiragana: 'めがじゅぺった',       color: Color(0xFF455A64), pokedexId: 10063),
+  PokemonEntry(katakana: 'メガアブソル',         hiragana: 'めがあぶそる',         color: Color(0xFFEEEEEE), pokedexId: 10064),
+  PokemonEntry(katakana: 'メガボーマンダ',       hiragana: 'めがぼーまんだ',       color: Color(0xFF0D47A1), pokedexId: 10065),
+  PokemonEntry(katakana: 'メガメタグロス',       hiragana: 'めがめたぐろす',       color: Color(0xFF37474F), pokedexId: 10066),
+  PokemonEntry(katakana: 'メガラティアス',       hiragana: 'めがらてぃあす',       color: Color(0xFFC62828), pokedexId: 10067),
+  PokemonEntry(katakana: 'メガラティオス',       hiragana: 'めがらてぃおす',       color: Color(0xFF0D47A1), pokedexId: 10068),
+  PokemonEntry(katakana: 'ゲンシカイオーガ',     hiragana: 'げんしかいおーが',     color: Color(0xFF0D47A1), pokedexId: 10069),
+  PokemonEntry(katakana: 'ゲンシグラードン',     hiragana: 'げんしぐらーどん',     color: Color(0xFFB71C1C), pokedexId: 10070),
+  PokemonEntry(katakana: 'メガレックウザ',       hiragana: 'めがれっくうざ',       color: Color(0xFF1B5E20), pokedexId: 10071),
+  // 第4世代メガ
+  PokemonEntry(katakana: 'メガガブリアス',       hiragana: 'めががぶりあす',       color: Color(0xFF0D47A1), pokedexId: 10073),
+  PokemonEntry(katakana: 'メガルカリオ',         hiragana: 'めがるかりお',         color: Color(0xFF1565C0), pokedexId: 10074),
 ];

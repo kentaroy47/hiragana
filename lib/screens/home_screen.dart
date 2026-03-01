@@ -145,11 +145,17 @@ class _RightPanel extends StatelessWidget {
             label: 'ポケモン',
             isActive: true,
             isPokemon: true,
-            onTap: () {
+            onTap: () async {
+              final hiraganaMode = await showDialog<bool>(
+                context: context,
+                builder: (_) => const _PokemonModeDialog(),
+              );
+              if (hiraganaMode == null) return;
+              if (!context.mounted) return;
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const PokemonScreen(),
+                  builder: (_) => PokemonScreen(hiraganaMode: hiraganaMode),
                 ),
               );
             },
@@ -317,6 +323,103 @@ class _LevelCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── ポケモンモード選択ダイアログ ───────────────────────────────────────────────
+
+class _PokemonModeDialog extends StatelessWidget {
+  const _PokemonModeDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text(
+        'モードをえらんでね',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ModeOption(
+            emoji: '🔤',
+            label: 'カタカナ',
+            description: 'カタカナでなぞる',
+            color: AppTheme.blueAccent,
+            onTap: () => Navigator.pop(context, false),
+          ),
+          const SizedBox(height: 12),
+          _ModeOption(
+            emoji: '📝',
+            label: 'ひらがな',
+            description: 'ひらがなでなぞる',
+            color: AppTheme.pinkAccent,
+            onTap: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeOption extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final String description;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ModeOption({
+    required this.emoji,
+    required this.label,
+    required this.description,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

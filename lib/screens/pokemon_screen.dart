@@ -7,7 +7,8 @@ import '../services/storage_service.dart';
 import '../widgets/drawing_canvas.dart';
 
 class PokemonScreen extends StatefulWidget {
-  const PokemonScreen({super.key});
+  final bool hiraganaMode;
+  const PokemonScreen({super.key, this.hiraganaMode = false});
 
   @override
   State<PokemonScreen> createState() => _PokemonScreenState();
@@ -26,6 +27,9 @@ class _PokemonScreenState extends State<PokemonScreen> {
 
   final _random = math.Random();
   int _prevPokemonIndex = -1;
+
+  List<String> get _currentChars =>
+      widget.hiraganaMode ? _pokemon.hiraganaChars : _pokemon.chars;
 
   @override
   void initState() {
@@ -86,7 +90,7 @@ class _PokemonScreenState extends State<PokemonScreen> {
     SoundService.playStrokeComplete();
     setState(() {}); // キャラ進捗行の緑チェックを即時表示
 
-    final isLast = _scores.length >= _pokemon.chars.length;
+    final isLast = _scores.length >= _currentChars.length;
 
     if (!isLast) {
       Future.delayed(const Duration(milliseconds: 700), () {
@@ -115,9 +119,11 @@ class _PokemonScreenState extends State<PokemonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chars = _pokemon.chars;
+    final chars = _currentChars;
     final currentChar = chars[_charIndex];
-    final strokeCount = strokeCountFor(currentChar);
+    final strokeCount = widget.hiraganaMode
+        ? hiraganaStrokeCountFor(currentChar)
+        : strokeCountFor(currentChar);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -154,7 +160,9 @@ class _PokemonScreenState extends State<PokemonScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _pokemon.hiragana,
+                            widget.hiraganaMode
+                                ? _pokemon.katakana
+                                : _pokemon.hiragana,
                             style: const TextStyle(
                               fontSize: 20,
                               color: AppTheme.textGray,
@@ -779,26 +787,52 @@ class _CatchOverlayState extends State<_CatchOverlay>
 
 // ─── ゲットずかん ダイアログ ──────────────────────────────────────────────────
 
-class _PokedexDialog extends StatelessWidget {
+class _PokedexDialog extends StatefulWidget {
   final List<PokemonEntry> caughtPokemon;
 
   const _PokedexDialog({required this.caughtPokemon});
 
   @override
-  Widget build(BuildContext context) {
-    // 重複排除してゲット回数をカウント
-    final counts = <String, int>{};
-    final unique = <PokemonEntry>[];
-    for (final p in caughtPokemon) {
-      if (!counts.containsKey(p.katakana)) unique.add(p);
-      counts[p.katakana] = (counts[p.katakana] ?? 0) + 1;
-    }
+  State<_PokedexDialog> createState() => _PokedexDialogState();
+}
 
+class _PokedexDialogState extends State<_PokedexDialog>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  // 重複排除 & カウント（全体）
+  late final Map<String, int> _counts;
+  late final List<PokemonEntry> _normal;  // pokedexId < 10000
+  late final List<PokemonEntry> _mega;    // pokedexId >= 10000
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
+    _counts = {};
+    final uniqueAll = <PokemonEntry>[];
+    for (final p in widget.caughtPokemon) {
+      if (!_counts.containsKey(p.katakana)) uniqueAll.add(p);
+      _counts[p.katakana] = (_counts[p.katakana] ?? 0) + 1;
+    }
+    _normal = uniqueAll.where((p) => p.pokedexId < 10000).toList();
+    _mega   = uniqueAll.where((p) => p.pokedexId >= 10000).toList();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: SizedBox(
         width: 680,
-        height: 460,
+        height: 500,
         child: Column(
           children: [
             // ヘッダー
@@ -816,14 +850,6 @@ class _PokedexDialog extends StatelessWidget {
                       color: AppTheme.darkText,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${unique.length}ひき',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: AppTheme.textGray,
-                    ),
-                  ),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -832,49 +858,78 @@ class _PokedexDialog extends StatelessWidget {
                 ],
               ),
             ),
+
+            // タブバー
+            TabBar(
+              controller: _tabController,
+              labelStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+              unselectedLabelStyle: const TextStyle(fontSize: 14),
+              labelColor: AppTheme.blueAccent,
+              unselectedLabelColor: AppTheme.textGray,
+              indicatorColor: AppTheme.blueAccent,
+              tabs: [
+                Tab(text: 'ポケモン  ${_normal.length}ひき'),
+                Tab(text: 'メガシンカ  ${_mega.length}ひき'),
+              ],
+            ),
             const Divider(height: 1),
 
-            // グリッド or 空状態
+            // タブコンテンツ
             Expanded(
-              child: unique.isEmpty
-                  ? const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text('🔍', style: TextStyle(fontSize: 48)),
-                          SizedBox(height: 12),
-                          Text(
-                            'まだゲットしていないよ！',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: AppTheme.textGray,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 5,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 0.82,
-                      ),
-                      itemCount: unique.length,
-                      itemBuilder: (context, i) {
-                        final p = unique[i];
-                        return _PokedexCard(
-                          pokemon: p,
-                          count: counts[p.katakana]!,
-                        );
-                      },
-                    ),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _PokedexGrid(entries: _normal, counts: _counts),
+                  _PokedexGrid(entries: _mega,   counts: _counts),
+                ],
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PokedexGrid extends StatelessWidget {
+  final List<PokemonEntry> entries;
+  final Map<String, int> counts;
+
+  const _PokedexGrid({required this.entries, required this.counts});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('🔍', style: TextStyle(fontSize: 48)),
+            SizedBox(height: 12),
+            Text(
+              'まだゲットしていないよ！',
+              style: TextStyle(fontSize: 18, color: AppTheme.textGray),
+            ),
+          ],
+        ),
+      );
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 5,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.82,
+      ),
+      itemCount: entries.length,
+      itemBuilder: (context, i) {
+        final p = entries[i];
+        return _PokedexCard(pokemon: p, count: counts[p.katakana]!);
+      },
     );
   }
 }
