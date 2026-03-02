@@ -21,7 +21,8 @@
       "Bash(flutter analyze lib/widgets/drawing_canvas.dart)",
       "Bash(flutter analyze lib/screens/pokemon_screen.dart)",
       "Bash(flutter analyze lib/data/pokemon_data.dart)",
-      "Bash(flutter analyze --no-fatal-infos)"
+      "Bash(flutter analyze --no-fatal-infos)",
+      "WebFetch(domain:pokeapi.co)"
     ]
   }
 }
