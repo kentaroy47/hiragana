@@ -1086,20 +1086,16 @@ class _PokedexDetailDialogState extends State<_PokedexDetailDialog> {
           jsonDecode(speciesRes.body) as Map<String, dynamic>;
 
       final entries = speciesData['flavor_text_entries'] as List;
-      // 子供向けにひらがな優先、なければ漢字混じりを使用
-      final ja = entries.firstWhere(
-        (e) => e['language']['name'] == 'ja-Hrkt',
-        orElse: () => entries.firstWhere(
-          (e) => e['language']['name'] == 'ja',
-          orElse: () => null,
-        ),
-      );
+      // ひらがな・カタカナのみ（ja-Hrkt）。複数バージョンある場合は最新を使用。
+      final kanaEntries =
+          entries.where((e) => e['language']['name'] == 'ja-Hrkt').toList();
+      final jaEntry = kanaEntries.isNotEmpty ? kanaEntries.last : null;
 
       if (!mounted) return;
       setState(() {
         _data = pokemonData;
-        _flavorText = ja != null
-            ? (ja['flavor_text'] as String)
+        _flavorText = jaEntry != null
+            ? (jaEntry['flavor_text'] as String)
                 .replaceAll('\n', ' ')
                 .replaceAll('\f', ' ')
             : null;
