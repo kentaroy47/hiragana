@@ -881,11 +881,12 @@ class _PokedexDialogState extends State<_PokedexDialog>
   late final Map<String, int> _counts;
   late final List<PokemonEntry> _normal;
   late final List<PokemonEntry> _mega;
+  late final List<PokemonEntry> _shiny;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
 
     _counts = {};
     final uniqueAll = <PokemonEntry>[];
@@ -895,6 +896,7 @@ class _PokedexDialogState extends State<_PokedexDialog>
     }
     _normal = uniqueAll.where((p) => p.pokedexId < 10000).toList();
     _mega   = uniqueAll.where((p) => p.pokedexId >= 10000).toList();
+    _shiny  = uniqueAll.where((p) => widget.shinyCaughtNames.contains(p.katakana)).toList();
   }
 
   @override
@@ -950,6 +952,7 @@ class _PokedexDialogState extends State<_PokedexDialog>
               tabs: [
                 Tab(text: 'ポケモン  ${_normal.length}ひき'),
                 Tab(text: 'メガシンカ  ${_mega.length}ひき'),
+                Tab(text: '✨いろちがい  ${_shiny.length}ひき'),
               ],
             ),
             const Divider(height: 1),
@@ -963,6 +966,8 @@ class _PokedexDialogState extends State<_PokedexDialog>
                       shinyCaughtNames: widget.shinyCaughtNames),
                   _PokedexGrid(entries: _mega,   counts: _counts,
                       shinyCaughtNames: widget.shinyCaughtNames),
+                  _PokedexGrid(entries: _shiny,  counts: _counts,
+                      shinyCaughtNames: widget.shinyCaughtNames, forceShiny: true),
                 ],
               ),
             ),
@@ -977,11 +982,13 @@ class _PokedexGrid extends StatelessWidget {
   final List<PokemonEntry> entries;
   final Map<String, int> counts;
   final Set<String> shinyCaughtNames;
+  final bool forceShiny;
 
   const _PokedexGrid({
     required this.entries,
     required this.counts,
     required this.shinyCaughtNames,
+    this.forceShiny = false,
   });
 
   @override
@@ -1015,7 +1022,7 @@ class _PokedexGrid extends StatelessWidget {
         return _PokedexCard(
           pokemon: p,
           count: counts[p.katakana]!,
-          isShiny: shinyCaughtNames.contains(p.katakana),
+          isShiny: forceShiny || shinyCaughtNames.contains(p.katakana),
         );
       },
     );
