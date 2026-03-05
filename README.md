@@ -2,14 +2,22 @@
 
 子供がポケモンのなまえをなぞりながら、ひらがな・カタカナを楽しく練習できる Flutter Web アプリです。
 
-**[▶ アプリを開く](https://kyoshidm.github.io/hiragana-flutter/)**
+**[▶ アプリを開く](https://kentaroy47.github.io/hiragana/)**
+
+---
+
+## スクリーンショット
+
+| ポケモンなぞり | ゲット演出 |
+|--------------|-----------|
+| ![なぞり](docs/screenshots/pokemon_tracing.png) | ![ゲット](docs/screenshots/pokemon_catch.png) |
 
 ---
 
 ## 機能
 
 ### ポケモンなぞりゲーム
-- 第1〜9世代の人気ポケモン **70匹** からランダムに出題
+- 第1〜9世代の人気ポケモン **200匹** からランダムに出題
 - カタカナの名前を1文字ずつなぞる（例：フシギダネ → 5文字）
 - カタカナが読めない子のために **ひらがなのふりがな** を表示
 - なぞり完了で **ポケモンゲット！** 演出
@@ -54,5 +62,5 @@ flutter run -d chrome
 `main` ブランチへの push で GitHub Actions が自動的に GitHub Pages へデプロイします。
 
 ```bash
-flutter build web --base-href /hiragana-flutter/ --release
+flutter build web --base-href /hiragana/ --release
 ```
